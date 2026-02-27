@@ -215,3 +215,169 @@ At the bottom: `if __name__ == "__main__": mcp.run()`. This is identical to the 
 2. **Auto-retry on session expiry** — Mirth sessions can expire. The `_get()` helper should catch 401 responses (Mirth returns HTTP 401 for expired sessions, unlike DPA's 302 redirect), re-call `_login()`, and retry the request once. Verify the exact HTTP status Mirth returns for expired sessions.
 
 3. **SSL verification** — Like the DPA example, self-signed certs are common in Mirth environments. Keep `ssl.CERT_NONE` as the default, matching the existing pattern in `server.py`.
+
+## Detailed To-Do (Phased)
+
+Phase 0 — Readiness and environment
+- Confirm MCP runs over stdio only; no network listener will be created.
+- Ensure required environment variables are available: MIRTH_URL, MIRTH_USERNAME, MIRTH_PASSWORD, ENV_PREFIX (optional). NOTE: If the environment variables are not set, you may temporarily set dummy values for testing, however in actual use, the environment variables are guaranteed to be set by the MCP client.
+- Verify mcp package is available; use only Python standard library modules otherwise. NOTE: When we say 'mcp' package we are referring to 'FastMCP', more specifically 'from mcp.server.fastmcp import FastMCP' from server.py, reference server.py again if you need a refresher.
+- Validate Mirth base URL format (no trailing slash assumptions) and reachability.
+
+Phase 1 — Project scaffold
+- Create mirth_server.py and add module-level imports for stdlib networking, SSL, cookies, typing, and JSON handling.
+- Read MIRTH_URL, MIRTH_USERNAME, MIRTH_PASSWORD, and ENV_PREFIX from environment variables.
+- Build SSL context with certificate verification disabled by default (consistent with plan).
+- Create a shared CookieJar and urllib opener using the SSL context and cookie processor.
+- Instantiate FastMCP("mirth") for stdio-based MCP.
+
+Phase 2 — Authentication helper
+- Implement _login():
+  - POST to /api/users/_login with application/x-www-form-urlencoded body: username, password.
+  - Allow the cookie jar to capture JSESSIONID; do not implement CSRF handling.
+  - Handle non-2xx responses by raising a clear RuntimeError with truncated response text.
+  - Keep timeouts reasonable (e.g., ~10–15s).
+
+Phase 3 — HTTP GET helper
+- Implement _get(path, params=None, raw=False):
+  - Construct URL as MIRTH_URL + path; URL-encode query parameters when provided.
+  - Convert Python boolean parameters to lowercase 'true'/'false' strings before encoding.
+  - Add Accept: application/json header by default.
+  - On success:
+    - If raw=True, decode and return text content.
+    - Otherwise, attempt to parse JSON and return parsed data; if parsing fails, return raw text.
+  - On HTTP 401, call _login() once and retry the request; return the retried result.
+  - On other HTTP errors, raise a RuntimeError with code and a truncated response body.
+  - Ensure consistent timeouts and minimal redirects (default opener behavior is fine for GETs).
+
+Phase 4 — Tool registration scaffolding
+- Read PREFIX = os.environ.get("ENV_PREFIX", "").
+- For every MCP tool decorator, set name=f"{PREFIX}tool_name".
+- Use clear docstrings per tool describing purpose, parameters, and Mirth path.
+- Keep function argument names aligned with documented query parameter names (camelCase as needed) and use Optional defaults for optional parameters.
+- For endpoints that return text/plain, call _get with raw=True (as specified in the plan).
+
+Phase 5 — Implement tools by category
+- Channels:
+  - get_channels(params: channelId=None, pollingOnly=None, includeCodeTemplateLibraries=None) -> wrap GET /api/channels.
+  - get_channel(channelId, includeCodeTemplateLibraries=None) -> GET /api/channels/{channelId}.
+  - get_channel_ids_and_names() -> GET /api/channels/idsAndNames.
+  - get_connector_names(channelId) -> GET /api/channels/{channelId}/connectorNames.
+  - get_metadata_columns(channelId) -> GET /api/channels/{channelId}/metaDataColumns.
+- Channel Groups:
+  - get_channel_groups(channelGroupId=None) -> GET /api/channelgroups.
+- Channel Statistics:
+  - get_channel_statistics(channelId=None, includeUndeployed=None, includeMetadataId=None, excludeMetadataId=None, aggregateStats=None) -> GET /api/channels/statistics.
+  - get_channel_statistics_by_id(channelId) -> GET /api/channels/{channelId}/statistics.
+- Channel Status:
+  - get_channel_status_list(channelId=None, filter=None, includeUndeployed=None) -> GET /api/channels/statuses.
+  - get_channel_status(channelId) -> GET /api/channels/{channelId}/status.
+  - get_dashboard_channel_info(fetchSize=None, filter=None) -> GET /api/channels/statuses/initial.
+- Alerts:
+  - get_alerts(alertId=None) -> GET /api/alerts.
+  - get_alert(alertId) -> GET /api/alerts/{alertId}.
+  - get_alert_protocol_options() -> GET /api/alerts/options.
+  - get_alert_status_list() -> GET /api/alerts/statuses.
+- Code Templates:
+  - get_code_templates(codeTemplateId=None) -> GET /api/codeTemplates.
+  - get_code_template(codeTemplateId) -> GET /api/codeTemplates/{codeTemplateId}.
+  - get_code_template_libraries(libraryId=None, includeCodeTemplates=None) -> GET /api/codeTemplateLibraries.
+  - get_code_template_library(libraryId, includeCodeTemplates=None) -> GET /api/codeTemplateLibraries/{libraryId}.
+- Server Configuration:
+  - get_server_version(raw text) -> GET /api/server/version (raw=True).
+  - get_server_id(raw text) -> GET /api/server/id (raw=True).
+  - get_server_status() -> GET /api/server/status.
+  - get_server_about() -> GET /api/server/about.
+  - get_server_jvm() -> GET /api/server/jvm.
+  - get_server_build_date(raw text) -> GET /api/server/buildDate (raw=True).
+  - get_server_time() -> GET /api/server/time.
+  - get_server_timezone(raw text) -> GET /api/server/timezone (raw=True).
+  - get_license_info() -> GET /api/server/licenseInfo.
+  - get_server_settings() -> GET /api/server/settings.
+  - get_update_settings() -> GET /api/server/updateSettings.
+  - get_configuration_map() -> GET /api/server/configurationMap.
+  - get_channel_metadata() -> GET /api/server/channelMetadata.
+  - get_channel_tags() -> GET /api/server/channelTags.
+  - get_global_scripts() -> GET /api/server/globalScripts.
+  - get_channel_dependencies() -> GET /api/server/channelDependencies.
+  - get_rhino_language_version() -> GET /api/server/rhinoLanguageVersion.
+  - get_charsets() -> GET /api/server/charsets.
+  - get_encryption_settings() -> GET /api/server/encryption.
+  - get_database_drivers() -> GET /api/server/databaseDrivers.
+  - get_server_configuration(initialState=None, pollingOnly=None, disableAlerts=None) -> GET /api/server/configuration.
+  - get_password_requirements() -> GET /api/server/passwordRequirements.
+  - get_resources() -> GET /api/server/resources.
+  - get_protocols_and_cipher_suites() -> GET /api/server/protocolsAndCipherSuites.
+- Events:
+  - get_events(maxEventId=None, minEventId=None, level=None, startDate=None, endDate=None, name=None, outcome=None, userId=None, ipAddress=None, serverId=None, offset=None, limit=None; curated to common params if desired) -> GET /api/events.
+  - get_event(eventId) -> GET /api/events/{eventId}.
+  - get_max_event_id() -> GET /api/events/maxEventId.
+  - get_event_count(same filter subset as get_events) -> GET /api/events/count.
+- Messages:
+  - get_messages(channelId, minMessageId=None, maxMessageId=None, startDate=None, endDate=None, textSearch=None, status=None, includeContent=None, offset=None, limit=None) -> GET /api/channels/{channelId}/messages.
+  - get_message_content(channelId, messageId, metaDataId=None) -> GET /api/channels/{channelId}/messages/{messageId}.
+  - get_message_count(channelId, same subset as get_messages) -> GET /api/channels/{channelId}/messages/count.
+  - get_max_message_id(channelId) -> GET /api/channels/{channelId}/messages/maxMessageId.
+  - get_message_attachments(channelId, messageId, includeContent=None) -> GET /api/channels/{channelId}/messages/{messageId}/attachments.
+  - get_message_attachment(channelId, messageId, attachmentId) -> GET /api/channels/{channelId}/messages/{messageId}/attachments/{attachmentId}.
+- Database Tasks:
+  - get_database_tasks() -> GET /api/databaseTasks.
+  - get_database_task(databaseTaskId) -> GET /api/databaseTasks/{databaseTaskId}.
+- Extensions:
+  - get_extension_metadata(extensionName) -> GET /api/extensions/{extensionName}.
+  - get_connector_metadata() -> GET /api/extensions/connectors.
+  - get_plugin_metadata() -> GET /api/extensions/plugins.
+  - get_plugin_properties(extensionName, propertyKeys=None) -> GET /api/extensions/{extensionName}/properties.
+  - is_extension_enabled(extensionName) -> GET /api/extensions/{extensionName}/enabled.
+- Extension Services — Dashboard Status:
+  - get_dashboard_channel_states() -> GET /api/extensions/dashboardstatus/channelStates.
+  - get_dashboard_channel_state(channelId) -> GET /api/extensions/dashboardstatus/channelStates/{channelId}.
+  - get_dashboard_connector_states(serverId=None) -> GET /api/extensions/dashboardstatus/connectorStates.
+  - get_all_channel_logs(serverId=None, fetchSize=None, lastLogId=None) -> GET /api/extensions/dashboardstatus/connectionLogs.
+  - get_channel_log(channelId, serverId=None, fetchSize=None, lastLogId=None) -> GET /api/extensions/dashboardstatus/connectionLogs/{channelId}.
+- Extension Services — Data Pruner:
+  - get_data_pruner_status() -> GET /api/extensions/datapruner/status.
+- Extension Services — Other:
+  - get_directory_resource_libraries(resourceId) -> GET /api/extensions/directoryresource/resources/{resourceId}/libraries.
+  - get_global_map() -> GET /api/extensions/globalmapviewer/maps/global.
+  - get_global_channel_map(channelId) -> GET /api/extensions/globalmapviewer/maps/{channelId}.
+  - get_all_maps(channelId=None, includeGlobalMap=None) -> GET /api/extensions/globalmapviewer/maps/all.
+- Extension Services — Server Log:
+  - get_server_logs(fetchSize=None, lastLogId=None) -> GET /api/extensions/serverlog.
+- System:
+  - get_system_stats() -> GET /api/system/stats.
+  - get_system_info() -> GET /api/system/info.
+- Users:
+  - get_all_users() -> GET /api/users.
+  - get_current_user() -> GET /api/users/current.
+  - get_user(userIdOrName) -> GET /api/users/{userIdOrName}.
+  - is_user_logged_in(userId) -> GET /api/users/{userId}/loggedIn.
+  - get_user_preferences(userId, name=None) -> GET /api/users/{userId}/preferences.
+  - get_user_preference(userId, name) -> GET /api/users/{userId}/preferences/{name}.
+- JMS Connector Templates:
+  - get_jms_templates() -> GET /api/connectors/jms/templates.
+  - get_jms_template(templateName) -> GET /api/connectors/jms/templates/{templateName}.
+
+Phase 6 — Startup and runtime
+- Call _login() at import time to establish an authenticated session.
+- Add __main__ guard to run the FastMCP server over stdio: mcp.run().
+
+Phase 7 — Testing and validation
+- Verify login succeeds with valid credentials and that the cookie jar is populated.
+- Exercise representative tools from each category and confirm expected JSON or text responses.
+- Confirm boolean query params are sent as lowercase strings.
+- Simulate/observe an expired session and confirm a 401 triggers a single re-login and retry.
+- Validate dynamic naming works by setting ENV_PREFIX and confirming tool discovery.
+
+Phase 8 — Robustness and quality
+- Add minimal logging (stdlib logging) for startup, login, retries, and HTTP errors.
+- Ensure clear error messages bubble up via RuntimeError with truncated bodies.
+- Validate timeouts are applied and no unexpected redirects break flows.
+
+Phase 9 — Documentation
+- Ensure each tool has a concise docstring: purpose, parameters, and endpoint path.
+- Document environment variables, stdio transport requirement, and usage instructions in the module docstring or a README if needed.
+
+Phase 10 — Final review
+- Re-check adherence to constraints: read-only GETs only, stdlib + mcp, stdio-only transport, ENV_PREFIX tool naming.
+- Spot-check endpoint parameter names for exact casing and mapping.
