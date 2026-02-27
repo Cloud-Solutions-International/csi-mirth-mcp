@@ -220,8 +220,10 @@ At the bottom: `if __name__ == "__main__": mcp.run()`. This is identical to the 
 
 Phase 0 — Readiness and environment
 - Confirm MCP runs over stdio only; no network listener will be created.
-- Ensure required environment variables are available: MIRTH_URL, MIRTH_USERNAME, MIRTH_PASSWORD, ENV_PREFIX (optional). NOTE: If the environment variables are not set, you may temporarily set dummy values for testing, however in actual use, the environment variables are guaranteed to be set by the MCP client.
-- Verify mcp package is available; use only Python standard library modules otherwise. NOTE: When we say 'mcp' package we are referring to 'FastMCP', more specifically 'from mcp.server.fastmcp import FastMCP' from server.py, reference server.py again if you need a refresher.
+- Ensure required environment variables are available: MIRTH_URL, MIRTH_USERNAME, MIRTH_PASSWORD, ENV_PREFIX (optional). 
+- For local testing only, you may temporarily set dummy values; ensure tests using dummies never contact real endpoints and clearly document that production relies on MCP client–provided env vars (no code defaults).
+- Verify mcp package is available; use only Python standard library modules otherwise. 
+- Confirm FastMCP is importsdable from mcp.server.fastmcp.FastMCP and that it operates over stdio as required (no network sockets).
 - Validate Mirth base URL format (no trailing slash assumptions) and reachability.
 
 Phase 1 — Project scaffold
@@ -368,6 +370,7 @@ Phase 7 — Testing and validation
 - Confirm boolean query params are sent as lowercase strings.
 - Simulate/observe an expired session and confirm a 401 triggers a single re-login and retry.
 - Validate dynamic naming works by setting ENV_PREFIX and confirming tool discovery.
+- For local testing with dummy environment variables, use safe mocks/stubs for HTTP requests to avoid contacting real Mirth servers.
 
 Phase 8 — Robustness and quality
 - Add minimal logging (stdlib logging) for startup, login, retries, and HTTP errors.
@@ -377,6 +380,8 @@ Phase 8 — Robustness and quality
 Phase 9 — Documentation
 - Ensure each tool has a concise docstring: purpose, parameters, and endpoint path.
 - Document environment variables, stdio transport requirement, and usage instructions in the module docstring or a README if needed.
+- Clarify that dummy environment variables may be used for local testing only; in production the MCP client provides MIRTH_URL, MIRTH_USERNAME, and MIRTH_PASSWORD.
+- Document the FastMCP import path (mcp.server.fastmcp.FastMCP) and explicitly state that the server communicates over stdio only (no network ports).
 
 Phase 10 — Final review
 - Re-check adherence to constraints: read-only GETs only, stdlib + mcp, stdio-only transport, ENV_PREFIX tool naming.
