@@ -2,6 +2,8 @@
 
 Build a new Python FastMCP server (`mirth_server.py`) mirroring the architecture of the existing [server.py](/home/bilal/repo/csi-mirth-mcp/server.py). It will expose ~69 read-only GET endpoints from the Mirth Connect API as MCP tools, authenticate via cookie-based login at startup, and support multi-instance deployment via `ENV_PREFIX`-based dynamic tool naming. Only stdlib + `mcp` dependencies will be used.
 
+Transport: The MCP server communicates over stdio (MCP over stdio) only; it does not open any network ports.
+
 ## Steps
 
 ### 1. Create the project scaffold and config block
@@ -10,7 +12,7 @@ Create a new file `mirth_server.py`. Read `MIRTH_URL`, `MIRTH_USERNAME`, `MIRTH_
 
 ### 2. Implement `_login()` and `_get()` helpers
 
-`_login()` must POST to `/api/users/_login` with `application/x-www-form-urlencoded` body (`username=...&password=...`). The Mirth API uses cookie-based auth (JSESSIONID), so the cookie jar from the opener will retain the session. Unlike the DPA example which has CSRF, Mirth's login is simpler — just POST credentials and store the cookie. `_get()` should be a generic helper that GETs `MIRTH_URL + path`, passes `Accept: application/json`, handles query params, and auto-re-logins on 401/redirect. Call `_login()` at module level on startup (line 102 pattern in the example).
+`_login()` must POST to `/api/users/_login` with `application/x-www-form-urlencoded` body (`username=...&password=...`). The Mirth API uses cookie-based auth (JSESSIONID), so the cookie jar from the opener will retain the session. Unlike the DPA example which has CSRF, Mirth's login is simpler — just POST credentials and store the cookie. `_get()` should be a generic helper that GETs `MIRTH_URL + path`, passes `Accept: application/json`, handles query params, and auto-re-logins on 401/redirect. Call `_login()` at module level on startup (line 102 pattern in the example). In `_get()`, ensure boolean query parameter values are converted to lowercase `'true'/'false'` strings before URL encoding.
 
 ### 3. Register all read-only GET tools with `ENV_PREFIX` prefixing
 
