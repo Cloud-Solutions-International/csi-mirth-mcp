@@ -1,7 +1,9 @@
 """
 Mirth Connect Read-Only MCP Server — FastMCP over stdio.
-Auth: cookie-based session (POST /api/users/_login with username/password).
-Only stdlib + mcp are used; all tools are GET/read-only.
+Auth: cookie-based session (POST /api/users/_login with username/password). Read-only GET tools.
+
+Setup:
+- Install: pip install mcp
 """
 
 import os
