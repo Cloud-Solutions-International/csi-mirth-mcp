@@ -318,10 +318,6 @@ def get_server_about():
     return _get("/api/server/about")
 
 
-@mcp.tool(name=f"{PREFIX}-get_server_jvm")
-def get_server_jvm():
-    """Get server JVM info."""
-    return _get("/api/server/jvm")
 
 
 @mcp.tool(name=f"{PREFIX}-get_server_build_date")
@@ -390,22 +386,10 @@ def get_channel_dependencies():
     return _get("/api/server/channelDependencies")
 
 
-@mcp.tool(name=f"{PREFIX}-get_rhino_language_version")
-def get_rhino_language_version():
-    """Get Rhino language version."""
-    return _get("/api/server/rhinoLanguageVersion")
 
 
-@mcp.tool(name=f"{PREFIX}-get_charsets")
-def get_charsets():
-    """Get available charsets."""
-    return _get("/api/server/charsets")
 
 
-@mcp.tool(name=f"{PREFIX}-get_encryption_settings")
-def get_encryption_settings():
-    """Get encryption settings."""
-    return _get("/api/server/encryption")
 
 
 @mcp.tool(name=f"{PREFIX}-get_database_drivers")
@@ -443,10 +427,6 @@ def get_resources():
     return _get("/api/server/resources")
 
 
-@mcp.tool(name=f"{PREFIX}-get_protocols_and_cipher_suites")
-def get_protocols_and_cipher_suites():
-    """Get supported protocols and cipher suites."""
-    return _get("/api/server/protocolsAndCipherSuites")
 
 
 # ── Events (4) ───────────────────────────────────────────────────────────────
@@ -637,10 +617,6 @@ def get_database_task(databaseTaskId: str):
 
 
 # ── Extensions (5) ───────────────────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_extension_metadata")
-def get_extension_metadata(extensionName: str):
-    """Get extension metadata by name."""
-    return _get(f"/api/extensions/{urllib.parse.quote(extensionName)}")
 
 
 @mcp.tool(name=f"{PREFIX}-get_connector_metadata")
@@ -649,25 +625,10 @@ def get_connector_metadata():
     return _get("/api/extensions/connectors")
 
 
-@mcp.tool(name=f"{PREFIX}-get_plugin_metadata")
-def get_plugin_metadata():
-    """List plugin metadata."""
-    return _get("/api/extensions/plugins")
 
 
-@mcp.tool(name=f"{PREFIX}-get_plugin_properties")
-def get_plugin_properties(extensionName: str, propertyKeys: Optional[list[str]] = None):
-    """Get plugin properties for an extension (optionally filter keys)."""
-    return _get(
-        f"/api/extensions/{urllib.parse.quote(extensionName)}/properties",
-        {"propertyKeys": propertyKeys},
-    )
 
 
-@mcp.tool(name=f"{PREFIX}-is_extension_enabled")
-def is_extension_enabled(extensionName: str):
-    """Check if an extension is enabled."""
-    return _get(f"/api/extensions/{urllib.parse.quote(extensionName)}/enabled")
 
 
 # ── Extension Services — Dashboard Status (5) ────────────────────────────────
@@ -808,16 +769,8 @@ def get_user_preference(userId: str, name: str):
 
 
 # ── JMS Connector Templates (2) ─────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_jms_templates")
-def get_jms_templates():
-    """List JMS connector templates."""
-    return _get("/api/connectors/jms/templates")
 
 
-@mcp.tool(name=f"{PREFIX}-get_jms_template")
-def get_jms_template(templateName: str):
-    """Get a JMS connector template by name."""
-    return _get(f"/api/connectors/jms/templates/{urllib.parse.quote(templateName)}")
 
 
 # ── Entry point (stdio) ─────────────────────────────────────────────────────-
