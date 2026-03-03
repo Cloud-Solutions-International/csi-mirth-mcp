@@ -64,7 +64,10 @@ def _login() -> None:
     req = urllib.request.Request(
         MIRTH_URL + "/api/users/_login",
         data=data,
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-Requested-With": "XMLHttpRequest",
+        },
         method="POST",
     )
     try:
