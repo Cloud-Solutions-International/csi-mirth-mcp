@@ -125,7 +125,7 @@ mcp = FastMCP("mirth")
 # Login on startup
 _login()
 
-# ── Channels (5) ─────────────────────────────────────────────────────────────
+# ── Channels ─────────────────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_channels")
 def get_channels(
     channelId: Optional[str] = None,
@@ -170,14 +170,14 @@ def get_metadata_columns(channelId: str):
     return _get(f"/api/channels/{urllib.parse.quote(channelId)}/metaDataColumns")
 
 
-# ── Channel Groups (1) ───────────────────────────────────────────────────────
+# ── Channel Groups ───────────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_channel_groups")
 def get_channel_groups(channelGroupId: Optional[str] = None):
     """List channel groups or get by ID."""
     return _get("/api/channelgroups", {"channelGroupId": channelGroupId})
 
 
-# ── Channel Statistics (2) ───────────────────────────────────────────────────
+# ── Channel Statistics ───────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_channel_statistics")
 def get_channel_statistics(
     channelId: Optional[str] = None,
@@ -205,7 +205,7 @@ def get_channel_statistics_by_id(channelId: str):
     return _get(f"/api/channels/{urllib.parse.quote(channelId)}/statistics")
 
 
-# ── Channel Status (3) ───────────────────────────────────────────────────────
+# ── Channel Status ───────────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_channel_status_list")
 def get_channel_status_list(
     channelId: Optional[str] = None,
@@ -233,32 +233,7 @@ def get_dashboard_channel_info(
     return _get("/api/channels/statuses/initial", {"fetchSize": fetchSize, "filter": filter})
 
 
-# ── Alerts (4) ───────────────────────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_alerts")
-def get_alerts(alertId: Optional[str] = None):
-    """List alerts or get by ID via parameter."""
-    return _get("/api/alerts", {"alertId": alertId})
-
-
-@mcp.tool(name=f"{PREFIX}-get_alert")
-def get_alert(alertId: str):
-    """Get an alert by ID."""
-    return _get(f"/api/alerts/{urllib.parse.quote(alertId)}")
-
-
-@mcp.tool(name=f"{PREFIX}-get_alert_protocol_options")
-def get_alert_protocol_options():
-    """Get alert protocol options."""
-    return _get("/api/alerts/options")
-
-
-@mcp.tool(name=f"{PREFIX}-get_alert_status_list")
-def get_alert_status_list():
-    """Get alert statuses."""
-    return _get("/api/alerts/statuses")
-
-
-# ── Code Templates (4) ───────────────────────────────────────────────────────
+# ── Code Templates ───────────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_code_templates")
 def get_code_templates(codeTemplateId: Optional[str] = None):
     """List code templates or filter by ID."""
@@ -293,37 +268,11 @@ def get_code_template_library(
     )
 
 
-# ── Server Configuration (24) ────────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_server_version")
-def get_server_version():
-    """Get server version (text)."""
-    return _get("/api/server/version", raw=True)
-
-
-@mcp.tool(name=f"{PREFIX}-get_server_id")
-def get_server_id():
-    """Get server ID (text)."""
-    return _get("/api/server/id", raw=True)
-
-
+# ── Server Configuration ────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_server_status")
 def get_server_status():
     """Get server status."""
     return _get("/api/server/status")
-
-
-@mcp.tool(name=f"{PREFIX}-get_server_about")
-def get_server_about():
-    """Get server about info."""
-    return _get("/api/server/about")
-
-
-
-
-@mcp.tool(name=f"{PREFIX}-get_server_build_date")
-def get_server_build_date():
-    """Get server build date (text)."""
-    return _get("/api/server/buildDate", raw=True)
 
 
 @mcp.tool(name=f"{PREFIX}-get_server_time")
@@ -336,24 +285,6 @@ def get_server_time():
 def get_server_timezone():
     """Get server timezone (text)."""
     return _get("/api/server/timezone", raw=True)
-
-
-@mcp.tool(name=f"{PREFIX}-get_license_info")
-def get_license_info():
-    """Get license info."""
-    return _get("/api/server/licenseInfo")
-
-
-@mcp.tool(name=f"{PREFIX}-get_server_settings")
-def get_server_settings():
-    """Get server settings."""
-    return _get("/api/server/settings")
-
-
-@mcp.tool(name=f"{PREFIX}-get_update_settings")
-def get_update_settings():
-    """Get update settings."""
-    return _get("/api/server/updateSettings")
 
 
 @mcp.tool(name=f"{PREFIX}-get_configuration_map")
@@ -386,39 +317,10 @@ def get_channel_dependencies():
     return _get("/api/server/channelDependencies")
 
 
-
-
-
-
-
-
 @mcp.tool(name=f"{PREFIX}-get_database_drivers")
 def get_database_drivers():
     """Get database drivers."""
     return _get("/api/server/databaseDrivers")
-
-
-@mcp.tool(name=f"{PREFIX}-get_server_configuration")
-def get_server_configuration(
-    initialState: Optional[str] = None,
-    pollingOnly: Optional[bool] = None,
-    disableAlerts: Optional[bool] = None,
-):
-    """Get full server configuration with optional flags."""
-    return _get(
-        "/api/server/configuration",
-        {
-            "initialState": initialState,
-            "pollingOnly": pollingOnly,
-            "disableAlerts": disableAlerts,
-        },
-    )
-
-
-@mcp.tool(name=f"{PREFIX}-get_password_requirements")
-def get_password_requirements():
-    """Get password requirements."""
-    return _get("/api/server/passwordRequirements")
 
 
 @mcp.tool(name=f"{PREFIX}-get_resources")
@@ -427,88 +329,7 @@ def get_resources():
     return _get("/api/server/resources")
 
 
-
-
-# ── Events (4) ───────────────────────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_events")
-def get_events(
-    maxEventId: Optional[int] = None,
-    minEventId: Optional[int] = None,
-    level: Optional[str] = None,
-    startDate: Optional[str] = None,
-    endDate: Optional[str] = None,
-    name: Optional[str] = None,
-    outcome: Optional[str] = None,
-    userId: Optional[str] = None,
-    ipAddress: Optional[str] = None,
-    serverId: Optional[str] = None,
-    offset: Optional[int] = None,
-    limit: Optional[int] = None,
-):
-    """List events (curated/common filters supported)."""
-    return _get(
-        "/api/events",
-        {
-            "maxEventId": maxEventId,
-            "minEventId": minEventId,
-            "level": level,
-            "startDate": startDate,
-            "endDate": endDate,
-            "name": name,
-            "outcome": outcome,
-            "userId": userId,
-            "ipAddress": ipAddress,
-            "serverId": serverId,
-            "offset": offset,
-            "limit": limit,
-        },
-    )
-
-
-@mcp.tool(name=f"{PREFIX}-get_event")
-def get_event(eventId: str):
-    """Get event by ID."""
-    return _get(f"/api/events/{urllib.parse.quote(eventId)}")
-
-
-@mcp.tool(name=f"{PREFIX}-get_max_event_id")
-def get_max_event_id():
-    """Get max event ID."""
-    return _get("/api/events/maxEventId")
-
-
-@mcp.tool(name=f"{PREFIX}-get_event_count")
-def get_event_count(
-    maxEventId: Optional[int] = None,
-    minEventId: Optional[int] = None,
-    level: Optional[str] = None,
-    startDate: Optional[str] = None,
-    endDate: Optional[str] = None,
-    name: Optional[str] = None,
-    outcome: Optional[str] = None,
-    userId: Optional[str] = None,
-    ipAddress: Optional[str] = None,
-    serverId: Optional[str] = None,
-):
-    """Get event count (uses same filters as events)."""
-    return _get(
-        "/api/events/count",
-        {
-            "maxEventId": maxEventId,
-            "minEventId": minEventId,
-            "level": level,
-            "startDate": startDate,
-            "endDate": endDate,
-            "name": name,
-            "outcome": outcome,
-            "userId": userId,
-            "ipAddress": ipAddress,
-            "serverId": serverId,
-        },
-    )
-
-
-# ── Messages (6) ─────────────────────────────────────────────────────────────
+# ── Messages ─────────────────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_messages")
 def get_messages(
     channelId: str,
@@ -603,7 +424,7 @@ def get_message_attachment(channelId: str, messageId: str, attachmentId: str):
     )
 
 
-# ── Database Tasks (2) ───────────────────────────────────────────────────────
+# ── Database Tasks ───────────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_database_tasks")
 def get_database_tasks():
     """List database tasks."""
@@ -616,19 +437,12 @@ def get_database_task(databaseTaskId: str):
     return _get(f"/api/databaseTasks/{urllib.parse.quote(databaseTaskId)}")
 
 
-# ── Extensions (5) ───────────────────────────────────────────────────────────
-
+# ── Extensions ───────────────────────────────────────────────────────────
 
 @mcp.tool(name=f"{PREFIX}-get_connector_metadata")
 def get_connector_metadata():
     """List connector metadata."""
     return _get("/api/extensions/connectors")
-
-
-
-
-
-
 
 
 # ── Extension Services — Dashboard Status (5) ────────────────────────────────
@@ -650,17 +464,6 @@ def get_dashboard_connector_states(serverId: Optional[str] = None):
     return _get("/api/extensions/dashboardstatus/connectorStates", {"serverId": serverId})
 
 
-@mcp.tool(name=f"{PREFIX}-get_all_channel_logs")
-def get_all_channel_logs(
-    serverId: Optional[str] = None, fetchSize: Optional[int] = None, lastLogId: Optional[int] = None
-):
-    """Get all channel connection logs."""
-    return _get(
-        "/api/extensions/dashboardstatus/connectionLogs",
-        {"serverId": serverId, "fetchSize": fetchSize, "lastLogId": lastLogId},
-    )
-
-
 @mcp.tool(name=f"{PREFIX}-get_channel_log")
 def get_channel_log(
     channelId: str, serverId: Optional[str] = None, fetchSize: Optional[int] = None, lastLogId: Optional[int] = None
@@ -671,22 +474,7 @@ def get_channel_log(
         {"serverId": serverId, "fetchSize": fetchSize, "lastLogId": lastLogId},
     )
 
-
-# ── Extension Services — Data Pruner (1) ─────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_data_pruner_status")
-def get_data_pruner_status():
-    """Get data pruner status."""
-    return _get("/api/extensions/datapruner/status")
-
-
-# ── Extension Services — Other (4) ──────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_directory_resource_libraries")
-def get_directory_resource_libraries(resourceId: str):
-    """Get directory resource libraries for a resource ID."""
-    return _get(
-        f"/api/extensions/directoryresource/resources/{urllib.parse.quote(resourceId)}/libraries"
-    )
-
+# ── Extension Services — Other ──────────────────────────────────────────
 
 @mcp.tool(name=f"{PREFIX}-get_global_map")
 def get_global_map():
@@ -709,14 +497,14 @@ def get_all_maps(channelId: Optional[str] = None, includeGlobalMap: Optional[boo
     )
 
 
-# ── Extension Services — Server Log (1) ─────────────────────────────────────-
+# ── Extension Services — Server Log ─────────────────────────────────────-
 @mcp.tool(name=f"{PREFIX}-get_server_logs")
 def get_server_logs(fetchSize: Optional[int] = None, lastLogId: Optional[int] = None):
     """Get server logs."""
     return _get("/api/extensions/serverlog", {"fetchSize": fetchSize, "lastLogId": lastLogId})
 
 
-# ── System (2) ───────────────────────────────────────────────────────────────
+# ── System ───────────────────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_system_stats")
 def get_system_stats():
     """Get system stats."""
@@ -727,50 +515,6 @@ def get_system_stats():
 def get_system_info():
     """Get system info."""
     return _get("/api/system/info")
-
-
-# ── Users (6) ────────────────────────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_all_users")
-def get_all_users():
-    """List all users."""
-    return _get("/api/users")
-
-
-@mcp.tool(name=f"{PREFIX}-get_current_user")
-def get_current_user():
-    """Get the current user."""
-    return _get("/api/users/current")
-
-
-@mcp.tool(name=f"{PREFIX}-get_user")
-def get_user(userIdOrName: str):
-    """Get user by ID or name."""
-    return _get(f"/api/users/{urllib.parse.quote(userIdOrName)}")
-
-
-@mcp.tool(name=f"{PREFIX}-is_user_logged_in")
-def is_user_logged_in(userId: str):
-    """Check if a user is logged in."""
-    return _get(f"/api/users/{urllib.parse.quote(userId)}/loggedIn")
-
-
-@mcp.tool(name=f"{PREFIX}-get_user_preferences")
-def get_user_preferences(userId: str, name: Optional[str] = None):
-    """Get user preferences, optionally filtered by name."""
-    return _get(f"/api/users/{urllib.parse.quote(userId)}/preferences", {"name": name})
-
-
-@mcp.tool(name=f"{PREFIX}-get_user_preference")
-def get_user_preference(userId: str, name: str):
-    """Get a single user preference by name."""
-    return _get(
-        f"/api/users/{urllib.parse.quote(userId)}/preferences/{urllib.parse.quote(name)}"
-    )
-
-
-# ── JMS Connector Templates (2) ─────────────────────────────────────────────
-
-
 
 
 # ── Entry point (stdio) ─────────────────────────────────────────────────────-
