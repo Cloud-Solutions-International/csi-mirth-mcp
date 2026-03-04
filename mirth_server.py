@@ -142,8 +142,33 @@ def get_channel(channelId: str, includeCodeTemplateLibraries: Optional[bool] = N
 
 @mcp.tool(name=f"{PREFIX}-get_channel_ids_and_names")
 def get_channel_ids_and_names():
-    """Get channel IDs and names."""
-    return _get("/api/channels/idsAndNames")
+    """
+    Get channel IDs and names as simple pairs.
+    Returns: a list of [channelId, channelName] arrays.
+    """
+    data = _get("/api/channels/idsAndNames")
+    # Expected shape:
+    # {
+    #   "map": {
+    #     "entry": [
+    #       { "string": ["<channelId>", "<channelName>"] },
+    #       ...
+    #     ]
+    #   }
+    # }
+    result: list[list[str]] = []
+    try:
+        entries = data.get("map", {}).get("entry", [])
+        if isinstance(entries, dict):
+            entries = [entries]
+        for ent in entries:
+            pair = ent.get("string")
+            if isinstance(pair, list):
+                result.append(pair)
+    except Exception:
+        # If the shape is unexpected, fall back to an empty list rather than raw data
+        result = []
+    return result
 
 
 @mcp.tool(name=f"{PREFIX}-get_connector_names")
