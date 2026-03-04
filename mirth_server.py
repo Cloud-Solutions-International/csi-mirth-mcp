@@ -524,4 +524,10 @@ def get_system_info():
 
 # ── Entry point (stdio) ─────────────────────────────────────────────────────-
 if __name__ == "__main__":
+    import logging
+
+    # Globally disable all logging at the core level to prevent FastMCP's 'rich'
+    # handler from writing plain-text log lines to stdout and corrupting the JSON stream.
+    logging.disable(logging.CRITICAL)
+
     mcp.run()
