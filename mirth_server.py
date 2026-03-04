@@ -131,23 +131,6 @@ mcp = FastMCP("mirth")
 _login()
 
 # ── Channels ─────────────────────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_channels")
-def get_channels(
-    channelId: Optional[str] = None,
-    pollingOnly: Optional[bool] = None,
-    includeCodeTemplateLibraries: Optional[bool] = None,
-):
-    """List channels."""
-    return _get(
-        "/api/channels",
-        {
-            "channelId": channelId,
-            "pollingOnly": pollingOnly,
-            "includeCodeTemplateLibraries": includeCodeTemplateLibraries,
-        },
-    )
-
-
 @mcp.tool(name=f"{PREFIX}-get_channel")
 def get_channel(channelId: str, includeCodeTemplateLibraries: Optional[bool] = None):
     """Get a specific channel by ID."""
