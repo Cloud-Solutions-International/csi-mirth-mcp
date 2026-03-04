@@ -171,23 +171,35 @@ def get_channel_ids_and_names():
     return result
 
 
-@mcp.tool(name=f"{PREFIX}-get_connector_names")
-def get_connector_names(channelId: str):
-    """Get connector names for a channel."""
-    return _get(f"/api/channels/{urllib.parse.quote(channelId)}/connectorNames")
-
-
-@mcp.tool(name=f"{PREFIX}-get_metadata_columns")
-def get_metadata_columns(channelId: str):
-    """Get metadata columns for a channel."""
-    return _get(f"/api/channels/{urllib.parse.quote(channelId)}/metaDataColumns")
-
-
 # ── Channel Groups ───────────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_channel_groups")
 def get_channel_groups(channelGroupId: Optional[str] = None):
-    """List channel groups or get by ID."""
-    return _get("/api/channelgroups", {"channelGroupId": channelGroupId})
+    """
+    Return a mapping of channel group name -> array of channel IDs.
+    If channelGroupId is provided, the result will include only that group's entry (if found).
+    """
+    data = _get("/api/channelgroups", {"channelGroupId": channelGroupId})
+    result: dict[str, list[str]] = {}
+    try:
+        groups = data.get("list", {}).get("channelGroup", [])
+        if isinstance(groups, dict):
+            groups = [groups]
+        for g in groups:
+            if not isinstance(g, dict):
+                continue
+            name = g.get("name")
+            channels = g.get("channels", {}).get("channel", [])
+            if isinstance(channels, dict):
+                channels = [channels]
+            ids: list[str] = []
+            for ch in channels:
+                if isinstance(ch, dict) and "id" in ch:
+                    ids.append(str(ch["id"]))
+            if name is not None:
+                result[str(name)] = ids
+    except Exception:
+        result = {}
+    return result
 
 
 # ── Channel Statistics ───────────────────────────────────────────────────
