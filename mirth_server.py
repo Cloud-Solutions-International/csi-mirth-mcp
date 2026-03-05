@@ -417,29 +417,6 @@ def get_message_attachment(channelId: str, messageId: str, attachmentId: str):
     )
 
 
-# ── Extension Services — Other ──────────────────────────────────────────
-
-@mcp.tool(name=f"{PREFIX}-get_global_map")
-def get_global_map():
-    """Get the global map."""
-    return _get("/api/extensions/globalmapviewer/maps/global")
-
-
-@mcp.tool(name=f"{PREFIX}-get_global_channel_map")
-def get_global_channel_map(channelId: str):
-    """Get the global channel map for a channel."""
-    return _get(f"/api/extensions/globalmapviewer/maps/{urllib.parse.quote(channelId)}")
-
-
-@mcp.tool(name=f"{PREFIX}-get_all_maps")
-def get_all_maps(channelId: Optional[str] = None, includeGlobalMap: Optional[bool] = None):
-    """Get all maps, optionally filtered."""
-    return _get(
-        "/api/extensions/globalmapviewer/maps/all",
-        {"channelId": channelId, "includeGlobalMap": includeGlobalMap},
-    )
-
-
 # ── System ───────────────────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_system_stats")
 def get_system_stats():
