@@ -294,17 +294,10 @@ def get_code_template_library(
 
 
 # ── Server Configuration ────────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_server_time")
-def get_server_time():
-    """Get server time."""
-    return _get("/api/server/time")
-
-
 @mcp.tool(name=f"{PREFIX}-get_global_scripts")
 def get_global_scripts():
     """
     Get global scripts as a mapping of name -> script content.
-    Transforms the nested response where each entry has a "string": [name, script] array.
     """
     data = _get("/api/server/globalScripts")
     result: dict[str, str] = {}
@@ -327,18 +320,6 @@ def get_global_scripts():
 def get_channel_dependencies():
     """Get channel dependencies."""
     return _get("/api/server/channelDependencies")
-
-
-@mcp.tool(name=f"{PREFIX}-get_database_drivers")
-def get_database_drivers():
-    """Get database drivers."""
-    return _get("/api/server/databaseDrivers")
-
-
-@mcp.tool(name=f"{PREFIX}-get_resources")
-def get_resources():
-    """Get server resources."""
-    return _get("/api/server/resources")
 
 
 # ── Messages ─────────────────────────────────────────────────────────────
@@ -436,56 +417,6 @@ def get_message_attachment(channelId: str, messageId: str, attachmentId: str):
     )
 
 
-# ── Database Tasks ───────────────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_database_tasks")
-def get_database_tasks():
-    """List database tasks."""
-    return _get("/api/databaseTasks")
-
-
-@mcp.tool(name=f"{PREFIX}-get_database_task")
-def get_database_task(databaseTaskId: str):
-    """Get a database task by ID."""
-    return _get(f"/api/databaseTasks/{urllib.parse.quote(databaseTaskId)}")
-
-
-# ── Extensions ───────────────────────────────────────────────────────────
-
-@mcp.tool(name=f"{PREFIX}-get_connector_metadata")
-def get_connector_metadata():
-    """List connector metadata."""
-    return _get("/api/extensions/connectors")
-
-
-# ── Extension Services — Dashboard Status (5) ────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_dashboard_channel_states")
-def get_dashboard_channel_states():
-    """Get dashboard channel states."""
-    return _get("/api/extensions/dashboardstatus/channelStates")
-
-
-@mcp.tool(name=f"{PREFIX}-get_dashboard_channel_state")
-def get_dashboard_channel_state(channelId: str):
-    """Get dashboard channel state by channel ID."""
-    return _get(f"/api/extensions/dashboardstatus/channelStates/{urllib.parse.quote(channelId)}")
-
-
-@mcp.tool(name=f"{PREFIX}-get_dashboard_connector_states")
-def get_dashboard_connector_states(serverId: Optional[str] = None):
-    """Get dashboard connector states (optionally filtered by serverId)."""
-    return _get("/api/extensions/dashboardstatus/connectorStates", {"serverId": serverId})
-
-
-@mcp.tool(name=f"{PREFIX}-get_channel_log")
-def get_channel_log(
-    channelId: str, serverId: Optional[str] = None, fetchSize: Optional[int] = None, lastLogId: Optional[int] = None
-):
-    """Get connection logs for a specific channel."""
-    return _get(
-        f"/api/extensions/dashboardstatus/connectionLogs/{urllib.parse.quote(channelId)}",
-        {"serverId": serverId, "fetchSize": fetchSize, "lastLogId": lastLogId},
-    )
-
 # ── Extension Services — Other ──────────────────────────────────────────
 
 @mcp.tool(name=f"{PREFIX}-get_global_map")
@@ -509,24 +440,11 @@ def get_all_maps(channelId: Optional[str] = None, includeGlobalMap: Optional[boo
     )
 
 
-# ── Extension Services — Server Log ─────────────────────────────────────-
-@mcp.tool(name=f"{PREFIX}-get_server_logs")
-def get_server_logs(fetchSize: Optional[int] = None, lastLogId: Optional[int] = None):
-    """Get server logs."""
-    return _get("/api/extensions/serverlog", {"fetchSize": fetchSize, "lastLogId": lastLogId})
-
-
 # ── System ───────────────────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_system_stats")
 def get_system_stats():
-    """Get system stats."""
+    """Get system stats like server time, timezone, memory usage, etc."""
     return _get("/api/system/stats")
-
-
-@mcp.tool(name=f"{PREFIX}-get_system_info")
-def get_system_info():
-    """Get system info."""
-    return _get("/api/system/info")
 
 
 # ── Entry point (stdio) ─────────────────────────────────────────────────────-
