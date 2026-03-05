@@ -211,8 +211,11 @@ def get_channel_statistics(
     excludeMetadataId: Optional[str] = None,
     aggregateStats: Optional[bool] = None,
 ):
-    """Get channel statistics (optionally filtered)."""
-    return _get(
+    """
+    Get channel statistics as a mapping from channelId to counters.
+    Returns: { "<channelId>": {"received": int, "sent": int, "error": int, "filtered": int, "queued": int}, ... }
+    """
+    data = _get(
         "/api/channels/statistics",
         {
             "channelId": channelId,
@@ -222,6 +225,37 @@ def get_channel_statistics(
             "aggregateStats": aggregateStats,
         },
     )
+    result: dict[str, dict[str, int]] = {}
+
+    def _to_int(x):
+        try:
+            return int(x)
+        except Exception:
+            try:
+                return int(float(x))
+            except Exception:
+                return 0
+
+    try:
+        stats = data.get("list", {}).get("channelStatistics", [])
+        if isinstance(stats, dict):
+            stats = [stats]
+        for s in stats:
+            if not isinstance(s, dict):
+                continue
+            cid = s.get("channelId")
+            if cid is None:
+                continue
+            result[str(cid)] = {
+                "received": _to_int(s.get("received", 0)),
+                "sent": _to_int(s.get("sent", 0)),
+                "error": _to_int(s.get("error", 0)),
+                "filtered": _to_int(s.get("filtered", 0)),
+                "queued": _to_int(s.get("queued", 0)),
+            }
+    except Exception:
+        result = {}
+    return result
 
 
 @mcp.tool(name=f"{PREFIX}-get_channel_statistics_by_id")
