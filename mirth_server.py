@@ -258,40 +258,6 @@ def get_channel_statistics(
     return result
 
 
-@mcp.tool(name=f"{PREFIX}-get_channel_statistics_by_id")
-def get_channel_statistics_by_id(channelId: str):
-    """Get statistics for a specific channel."""
-    return _get(f"/api/channels/{urllib.parse.quote(channelId)}/statistics")
-
-
-# ── Channel Status ───────────────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_channel_status_list")
-def get_channel_status_list(
-    channelId: Optional[str] = None,
-    filter: Optional[str] = None,
-    includeUndeployed: Optional[bool] = None,
-):
-    """Get channel status list (with optional filter)."""
-    return _get(
-        "/api/channels/statuses",
-        {"channelId": channelId, "filter": filter, "includeUndeployed": includeUndeployed},
-    )
-
-
-@mcp.tool(name=f"{PREFIX}-get_channel_status")
-def get_channel_status(channelId: str):
-    """Get status for a channel."""
-    return _get(f"/api/channels/{urllib.parse.quote(channelId)}/status")
-
-
-@mcp.tool(name=f"{PREFIX}-get_dashboard_channel_info")
-def get_dashboard_channel_info(
-    fetchSize: Optional[int] = None, filter: Optional[str] = None
-):
-    """Initial dashboard channel info."""
-    return _get("/api/channels/statuses/initial", {"fetchSize": fetchSize, "filter": filter})
-
-
 # ── Code Templates ───────────────────────────────────────────────────────
 @mcp.tool(name=f"{PREFIX}-get_code_templates")
 def get_code_templates(codeTemplateId: Optional[str] = None):
@@ -328,46 +294,33 @@ def get_code_template_library(
 
 
 # ── Server Configuration ────────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_server_status")
-def get_server_status():
-    """Get server status."""
-    return _get("/api/server/status")
-
-
 @mcp.tool(name=f"{PREFIX}-get_server_time")
 def get_server_time():
     """Get server time."""
     return _get("/api/server/time")
 
 
-@mcp.tool(name=f"{PREFIX}-get_server_timezone")
-def get_server_timezone():
-    """Get server timezone (text)."""
-    return _get("/api/server/timezone", raw=True)
-
-
-@mcp.tool(name=f"{PREFIX}-get_configuration_map")
-def get_configuration_map():
-    """Get configuration map."""
-    return _get("/api/server/configurationMap")
-
-
-@mcp.tool(name=f"{PREFIX}-get_channel_metadata")
-def get_channel_metadata():
-    """Get channel metadata."""
-    return _get("/api/server/channelMetadata")
-
-
-@mcp.tool(name=f"{PREFIX}-get_channel_tags")
-def get_channel_tags():
-    """Get channel tags."""
-    return _get("/api/server/channelTags")
-
-
 @mcp.tool(name=f"{PREFIX}-get_global_scripts")
 def get_global_scripts():
-    """Get global scripts."""
-    return _get("/api/server/globalScripts")
+    """
+    Get global scripts as a mapping of name -> script content.
+    Transforms the nested response where each entry has a "string": [name, script] array.
+    """
+    data = _get("/api/server/globalScripts")
+    result: dict[str, str] = {}
+    try:
+        entries = data.get("map", {}).get("entry", [])
+        if isinstance(entries, dict):
+            entries = [entries]
+        for ent in entries:
+            pair = ent.get("string")
+            if isinstance(pair, list) and len(pair) >= 2:
+                key = str(pair[0])
+                value = str(pair[1])
+                result[key] = value
+    except Exception:
+        result = {}
+    return result
 
 
 @mcp.tool(name=f"{PREFIX}-get_channel_dependencies")
