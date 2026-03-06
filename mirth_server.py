@@ -353,15 +353,6 @@ def get_messages(
     )
 
 
-@mcp.tool(name=f"{PREFIX}-get_message_content")
-def get_message_content(channelId: str, messageId: str, metaDataId: Optional[int] = None):
-    """Get message content by channel/message ID, optionally by metadata ID."""
-    return _get(
-        f"/api/channels/{urllib.parse.quote(channelId)}/messages/{urllib.parse.quote(messageId)}",
-        {"metaDataId": metaDataId},
-    )
-
-
 @mcp.tool(name=f"{PREFIX}-get_message_count")
 def get_message_count(
     channelId: str,
@@ -394,8 +385,20 @@ def get_message_count(
 
 @mcp.tool(name=f"{PREFIX}-get_max_message_id")
 def get_max_message_id(channelId: str):
-    """Get maximum message ID for a channel."""
-    return _get(f"/api/channels/{urllib.parse.quote(channelId)}/messages/maxMessageId")
+    """
+    Get maximum message ID for a channel as a raw integer.
+    """
+    data = _get(f"/api/channels/{urllib.parse.quote(channelId)}/messages/maxMessageId")
+    def _to_int(x):
+        try:
+            return int(x)
+        except Exception:
+            try:
+                return int(float(x))
+            except Exception:
+                return 0
+    value = data.get("long") if isinstance(data, dict) else data
+    return _to_int(value)
 
 
 @mcp.tool(name=f"{PREFIX}-get_message_attachments")
