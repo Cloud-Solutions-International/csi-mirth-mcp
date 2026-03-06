@@ -140,63 +140,62 @@ def get_channel(channelId: str, includeCodeTemplateLibraries: Optional[bool] = N
     )
 
 
-@mcp.tool(name=f"{PREFIX}-get_channel_ids_and_names")
-def get_channel_ids_and_names():
+@mcp.tool(name=f"{PREFIX}-get_channel_groups_channel_names_to_ids")
+def get_channel_groups_channel_names_to_ids():
     """
-    Get channel IDs and names as simple pairs.
-    Returns: a list of [channelId, channelName] arrays.
+    Combine channel IDs+names with channel groups, returning:
+    { "<channelGroupName>": { "<channelName>": "<channelId>", ... }, ... }
     """
-    data = _get("/api/channels/idsAndNames")
-    # Expected shape:
-    # {
-    #   "map": {
-    #     "entry": [
-    #       { "string": ["<channelId>", "<channelName>"] },
-    #       ...
-    #     ]
-    #   }
-    # }
-    result: list[list[str]] = []
+    # Fetch channel IDs and names
+    names_data = _get("/api/channels/idsAndNames")
+    # Fetch channel groups (with channel IDs per group)
+    groups_data = _get("/api/channelgroups")
+
+    # Build a mapping of channelId -> channelName
+    name_by_id: dict[str, str] = {}
     try:
-        entries = data.get("map", {}).get("entry", [])
+        entries = names_data.get("map", {}).get("entry", [])
         if isinstance(entries, dict):
             entries = [entries]
-        for ent in entries:
-            pair = ent.get("string")
-            if isinstance(pair, list):
-                result.append(pair)
+        if entries:
+            for ent in entries:
+                pair = ent.get("string")
+                if isinstance(pair, list) and len(pair) >= 2:
+                    cid = str(pair[0])
+                    cname = str(pair[1])
+                    name_by_id[cid] = cname
+        else:
+            channels_list = names_data.get("list", {}).get("channel", [])
+            if isinstance(channels_list, dict):
+                channels_list = [channels_list]
+            for ch in channels_list:
+                if isinstance(ch, dict) and "id" in ch and "name" in ch:
+                    name_by_id[str(ch["id"])] = str(ch["name"])
     except Exception:
-        # If the shape is unexpected, fall back to an empty list rather than raw data
-        result = []
-    return result
+        name_by_id = {}
 
-
-# ── Channel Groups ───────────────────────────────────────────────────────
-@mcp.tool(name=f"{PREFIX}-get_channel_groups")
-def get_channel_groups(channelGroupId: Optional[str] = None):
-    """
-    Return a mapping of channel group name -> array of channel IDs.
-    If channelGroupId is provided, the result will include only that group's entry (if found).
-    """
-    data = _get("/api/channelgroups", {"channelGroupId": channelGroupId})
-    result: dict[str, list[str]] = {}
+    # Build the final mapping: groupName -> { channelName: channelId }
+    result: dict[str, dict[str, str]] = {}
     try:
-        groups = data.get("list", {}).get("channelGroup", [])
+        groups = groups_data.get("list", {}).get("channelGroup", [])
         if isinstance(groups, dict):
             groups = [groups]
         for g in groups:
             if not isinstance(g, dict):
                 continue
-            name = g.get("name")
+            group_name = g.get("name")
+            if group_name is None:
+                continue
             channels = g.get("channels", {}).get("channel", [])
             if isinstance(channels, dict):
                 channels = [channels]
-            ids: list[str] = []
+            group_map: dict[str, str] = {}
             for ch in channels:
                 if isinstance(ch, dict) and "id" in ch:
-                    ids.append(str(ch["id"]))
-            if name is not None:
-                result[str(name)] = ids
+                    cid = str(ch["id"])
+                    cname = name_by_id.get(cid, cid)
+                    group_map[cname] = cid
+            result[str(group_name)] = group_map
     except Exception:
         result = {}
     return result
