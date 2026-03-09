@@ -141,11 +141,14 @@ def get_channel(channelId: str, includeCodeTemplateLibraries: Optional[bool] = N
 
 
 @mcp.tool(name=f"{PREFIX}-get_channel_groups_channel_names_to_ids")
-def get_channel_groups_channel_names_to_ids():
+def get_channel_groups_channel_names_to_ids(search: Optional[str] = None):
     """
     Combine channel IDs+names with channel groups, returning:
     { "<channelGroupName>": { "<channelName>": "<channelId>", ... }, ... }
     Channels not present in any group will be placed under "Default Group".
+    If 'search' is provided (case-insensitive substring), results are filtered:
+      - For non-default groups: include the full group if the group name or any channel (name or ID) matches.
+      - For "Default Group": include only the matching channel(s) under that group.
     """
     # Fetch channel IDs and names
     names_data = _get("/api/channels/idsAndNames")
@@ -211,6 +214,32 @@ def get_channel_groups_channel_names_to_ids():
             result["Default Group"] = default_map
     except Exception:
         result = {}
+
+    # Optional filtering by search keyword
+    if search is not None:
+        s = search.strip().lower()
+        if s:
+            filtered: dict[str, dict[str, str]] = {}
+            for group_name, group_map in result.items():
+                if group_name == "Default Group":
+                    # Only include matching channels from Default Group
+                    matched = {
+                        cname: cid
+                        for cname, cid in group_map.items()
+                        if s in cname.lower() or s in str(cid).lower()
+                    }
+                    if matched:
+                        filtered["Default Group"] = matched
+                else:
+                    # Include full group if group name or any channel matches
+                    group_matches = (
+                        s in group_name.lower()
+                        or any(s in cname.lower() or s in str(cid).lower() for cname, cid in group_map.items())
+                    )
+                    if group_matches:
+                        filtered[group_name] = group_map
+            return filtered
+
     return result
 
 
