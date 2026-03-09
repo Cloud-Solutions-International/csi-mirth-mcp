@@ -145,6 +145,7 @@ def get_channel_groups_channel_names_to_ids():
     """
     Combine channel IDs+names with channel groups, returning:
     { "<channelGroupName>": { "<channelName>": "<channelId>", ... }, ... }
+    Channels not present in any group will be placed under "Default Group".
     """
     # Fetch channel IDs and names
     names_data = _get("/api/channels/idsAndNames")
@@ -180,6 +181,7 @@ def get_channel_groups_channel_names_to_ids():
         groups = groups_data.get("list", {}).get("channelGroup", [])
         if isinstance(groups, dict):
             groups = [groups]
+        grouped_ids: set[str] = set()
         for g in groups:
             if not isinstance(g, dict):
                 continue
@@ -195,7 +197,18 @@ def get_channel_groups_channel_names_to_ids():
                     cid = str(ch["id"])
                     cname = name_by_id.get(cid, cid)
                     group_map[cname] = cid
+                    grouped_ids.add(cid)
             result[str(group_name)] = group_map
+
+        # Add channels not found in any group under "Default Group"
+        all_ids = set(name_by_id.keys())
+        ungrouped_ids = all_ids - grouped_ids
+        if ungrouped_ids:
+            default_map: dict[str, str] = {}
+            for cid in sorted(ungrouped_ids):
+                cname = name_by_id.get(cid, cid)
+                default_map[cname] = cid
+            result["Default Group"] = default_map
     except Exception:
         result = {}
     return result
