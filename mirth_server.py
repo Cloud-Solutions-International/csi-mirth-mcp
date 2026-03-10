@@ -13,6 +13,7 @@ import http.cookiejar
 import urllib.request
 import urllib.parse
 import urllib.error
+import concurrent.futures
 from typing import Any, Optional
 
 from mcp.server.fastmcp import FastMCP
@@ -150,10 +151,14 @@ def get_channel_groups_channel_names_to_ids(search: Optional[str] = None):
       - For non-default groups: include the full group if the group name or any channel (name or ID) matches.
       - For "Default Group": include only the matching channel(s) under that group.
     """
-    # Fetch channel IDs and names
-    names_data = _get("/api/channels/idsAndNames")
-    # Fetch channel groups (with channel IDs per group)
-    groups_data = _get("/api/channelgroups")
+    # Fetch channel IDs and names + channel groups in parallel
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        names_future = executor.submit(_get, "/api/channels/idsAndNames")
+        groups_future = executor.submit(_get, "/api/channelgroups")
+
+        # Wait for both requests to complete
+        names_data = names_future.result()
+        groups_data = groups_future.result()
 
     # Build a mapping of channelId -> channelName
     name_by_id: dict[str, str] = {}
